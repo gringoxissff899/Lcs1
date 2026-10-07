@@ -1,0 +1,795 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff0040">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="description" content="inter Auxílio de Mira">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='512' height='512' fill='%23000000'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial Black' font-size='200' font-weight='900' fill='%23ff0040'%3ELCS%3C/text%3E%3C/svg%3E">
+    <title>inter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .screen {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .screen.hidden {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .card {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(255, 0, 64, 0.3);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-svg {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 64, 0.6));
+            background: #000;
+            border-radius: 50%;
+            padding: 20px;
+        }
+
+        .logo-text {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: #ff0040;
+            text-transform: uppercase;
+            font-family: Arial Black, sans-serif;
+        }
+
+        .login-title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .field {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(40, 40, 40, 0.8);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .field:focus {
+            outline: none;
+            border-color: #ff0040;
+            box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
+        }
+
+        .field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .field.shake {
+            animation: shake 0.5s;
+            border-color: #ff4444;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 0, 64, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .credits {
+            text-align: center;
+            margin-top: 20px;
+            color: #ff0040;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .panel-title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(40, 40, 40, 0.6);
+            border: 2px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+            border-color: #ff0040;
+        }
+
+        .content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #checks {
+            margin-bottom: 25px;
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(40, 40, 40, 0.6);
+            border: 2px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .check-row:hover {
+            border-color: #ff0040;
+            background: rgba(255, 0, 64, 0.1);
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ff0040;
+            border-radius: 6px;
+            margin-right: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox.checked {
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .slider-row {
+            margin: 20px 0 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .slider-wrap {
+            margin-bottom: 25px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 0, 64, 0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(255, 0, 64, 0.6);
+        }
+
+        .aux-wrap {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .aux-btn {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(40, 40, 40, 0.6);
+            border: 2px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .aux-btn:hover {
+            border-color: #ff0040;
+            background: rgba(255, 0, 64, 0.1);
+        }
+
+        .aux-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 30, 0.98);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+            border-radius: 10px;
+            margin-top: 5px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            z-index: 10;
+        }
+
+        .aux-dropdown.open {
+            max-height: 200px;
+        }
+
+        .aux-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255, 0, 64, 0.2);
+        }
+
+        .aux-item:last-child {
+            border-bottom: none;
+        }
+
+        .aux-item:hover {
+            background: rgba(255, 0, 64, 0.2);
+        }
+
+        .inject {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ff0040, #ff3366);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .inject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 0, 64, 0.5);
+        }
+
+        .inject:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .info-row {
+            padding: 20px;
+            background: rgba(40, 40, 40, 0.6);
+            border: 2px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .link {
+            color: #ff3366;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff0040, transparent);
+            margin: 20px 0;
+        }
+
+        .copyright {
+            padding: 20px;
+            background: rgba(255, 0, 64, 0.1);
+            border: 2px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .bottom-credit {
+            text-align: center;
+            margin-top: 20px;
+            color: #ff0040;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+
+    <div id="loginScreen" class="screen">
+        <div class="card">
+            <div class="logo-container">
+                <div class="logo-svg">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black" font-size="80" font-weight="900" fill="#ff0040">LCS</text>
+                    </svg>
+                </div>
+                <div class="logo-text">LCS</div>
+            </div>
+            <h2 class="login-title">Digite sua Key</h2>
+            <input id="passwordField" class="field" type="text" placeholder="Key" autocomplete="off">
+            <button class="btn" id="loginBtn">Entrar</button>
+            <div class="credits">LCS</div>
+        </div>
+    </div>
+
+    <div id="panelScreen" class="screen hidden">
+        <div class="card">
+            <h3 class="panel-title">AUXÍLIO DE MIRA</h3>
+            <div class="tabs">
+                <button class="tab active" id="tabFun">Funções</button>
+                <button class="tab" id="tabInfo">Info</button>
+            </div>
+            <div id="funContent" class="content">
+                <div id="checks">
+                    <label class="check-row">
+                        <span class="checkbox" data-key="maxPrecision"></span>
+                        <span>Maximo de Precisão</span>
+                    </label>
+                    <label class="check-row">
+                        <span class="checkbox" data-key="norecoil"></span>
+                        <span>Norecoil</span>
+                    </label>
+                    <label class="check-row">
+                        <span class="checkbox" data-key="melhorarMira"></span>
+                        <span>Melhor Mira</span>
+                    </label>
+                </div>
+                <div class="slider-row">Precisão: <span id="precVal">0</span></div>
+                <div class="slider-wrap">
+                    <input id="slider" type="range" min="0" max="10" value="0" step="1">
+                </div>
+                <div class="aux-wrap">
+                    <button id="auxBtn" class="aux-btn">Selecionar Auxílio</button>
+                    <div id="auxDropdown" class="aux-dropdown">
+                        <div class="aux-item" data-val="Auxílio Cabeça">Auxílio Cabeça</div>
+                        <div class="aux-item" data-val="Auxílio no Recoil">Auxílio no Recoil</div>
+                        <div class="aux-item" data-val="Auxílio Sensi">Auxílio Sensi</div>
+                    </div>
+                </div>
+                <button class="inject" id="injectBtn">INJETAR FUNÇÕES NO JOGO</button>
+            </div>
+            <div id="infoContent" class="content" style="display:none">
+                <div class="info-row">
+                    <div style="font-weight:800">Contatar Suporte</div>
+                    <div style="margin-top:6px">WhatsApp: <a class="link" href="https://wa.me/5527998459309" target="_blank">27 99845-9309</a></div>
+                    <div style="margin-top:6px">Instagram: <a class="link" href="https://instagram.com/gringozinff" target="_blank">@gringozinff</a></div>
+                </div>
+                <div class="divider"></div>
+                <div class="copyright">
+                    <strong>Proibido revender.</strong> A revenda ou distribuição não autorizada deste produto/serviço resultará em ação legal imediata.
+                </div>
+            </div>
+            <div class="bottom-credit">LCS</div>
+        </div>
+    </div>
+
+    <!-- SEU BLOCO GAMECONFIG COMPLETO -->
+    <script type="application/json" id="gameConfig">
+{
+  "sensitivity": {
+    "SENSITIVITY_MULTIPLIER_LOW_ZOOM": 0.90,
+    "SENSITIVITY_MULTIPLIER_HIGH_ZOOM": 0.80,
+    "AIM_SENSITIVITY_TRANSITION_TIME": "GRADUAL"
+  },
+  "AimBot_Settings": {
+    "AIM_LEVEL_PERCENT": "95%",
+    "AIMBOT_SENSITIVITY": "100%",
+    "SENSITIVITY_WHEN_AIMING": "ANSI/OEM",
+    "BASE_MOUSE_SENSITIVITY": 6.50,
+    "VERTICAL_SENSITIVITY_MULTIPLIER": 2.19,
+    "MOUSE_SMOOTHING": "ENABLE",
+    "MOUSE_FILTERING": 0.0,
+    "LOSS_OF_FOCUS_BY_MOUSE_MOVEMENT": "DISABLED"
+  },
+  "TouchScreen_Settings": {
+    "FORCE_TOUCH_DELAY": 0.1,
+    "BASE_FORCE_PRESSURE": 2.0,
+    "TRIGGERING_FORCE_PRESSURE": 7.0
+  },
+  "InformesFuncion": "Activado",
+  "ComienzaActividadesOcupación1Si": "0n",
+  "ComienzaActividadesOcupación2Si": "Of",
+  "ComienzaActividadesOcupación3Si": "On",
+  "TXT_SETTINGS": {
+    "TXT_SETTING_VIEW": "10000601",
+    "TXT_SETTING_1XSC": "10000601",
+    "TXT_SETTING_2XSC": "10000601",
+    "TXT_SETTING_4XSC": "10000601",
+    "TXT_SETTING_8XSC": "10000601"
+  },
+  "ComienzaActividadesOcupación4Si": "0f",
+  "ComienzaActividadesOcupación5Si": "On",
+  "Patches": {
+    "aimfov_1x": "MemoryPatch",
+    "libil2cpp_address": "0x30665456",
+    "patch_value": "790444E3"
+  },
+  "ComienzaActividadesOcupación6Si": "On",
+  "Configuration": {
+    "X": 1670,
+    "Y": 500,
+    "CPU": 100,
+    "GPU": 100,
+    "DPI": 240,
+    "generalemulatorsensitivity": 100,
+    "joystick": 1000,
+    "Fov": 2000,
+    "LEFTCLICK": 1000,
+    "RIGHTCLICK": 1000,
+    "rightclicklifter": 1000,
+    "sensitivity": 100,
+    "touchsensitivity": 225,
+    "MouseSensitivity": "6.00"
+  },
+  "SystemSettings": {
+    "ro_min_fling_velocity": 8500,
+    "ro_max_fling_velocity": 16000,
+    "adaptive_touch_sensitivity": "speed",
+    "touch_coverage_calibration": "box",
+    "hwui_refreshRate": 96.0,
+    "triggeringForceTouchPressure": 6.0,
+    "acceleration": "99999.0px/s",
+    "QuietInterval": 0,
+    "pxKeyRepeatDelay": 0
+  },
+  "AimConfig": {
+    "Enabled": true,
+    "Precision": 0.95,
+    "IsHeadshotMode": true,
+    "Note": "SafeAimConfig - Blocked external references"
+  },
+  "DWORD_AIMBOT": {
+    "00001": "AimBot 100%",
+    "00002": "Sensitivity AimBot 100%",
+    "00003": "Mira-Pesada-Com-Mais-Precisão 100%",
+    "00004": "AimBot 100% VIP",
+    "00005": "Mira-Grudar-100%",
+    "00006": "Mira-Segurar-Na-Cabeça 100%",
+    "00007": "AimGrudar + AimBot Grudar 100%",
+    "00008": "Head Kill 100%",
+    "00009": "String AimBot 100%"
+  }
+}
+    </script>
+
+    <script>
+(function() {
+    'use strict';
+    
+    const gameConfig = JSON.parse(document.getElementById('gameConfig').textContent);
+    
+    // KEY
+    const KEY = "LCS-AIMBOT";
+    
+    // CANVAS
+    const c = document.getElementById('bgCanvas');
+    const ctx = c.getContext('2d');
+    
+    function resize() {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+    }
+    resize();
+    window.onresize = resize;
+    
+    const ps = [];
+    for (let i = 0; i < 60; i++) {
+        ps.push({
+            x: Math.random() * c.width,
+            y: Math.random() * c.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            r: Math.random() * 2 + 1
+        });
+    }
+    
+    function draw() {
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.fillStyle = '#888';
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 1;
+        
+        ps.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > c.width) p.vx *= -1;
+            if (p.y < 0 || p.y > c.height) p.vy *= -1;
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            for (let j = i + 1; j < ps.length; j++) {
+                const p2 = ps[j];
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 120) {
+                    ctx.globalAlpha = (120 - d) / 120 * 0.3;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+            }
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+    
+    // LOGIN
+    const ls = document.getElementById('loginScreen');
+    const pn = document.getElementById('panelScreen');
+    const pf = document.getElementById('passwordField');
+    const lb = document.getElementById('loginBtn');
+    
+    function login() {
+        if (pf.value.trim() === KEY) {
+            ls.classList.add('hidden');
+            pn.classList.remove('hidden');
+        } else {
+            pf.value = '';
+            pf.placeholder = 'Key inválida!';
+            pf.classList.add('shake');
+            setTimeout(() => {
+                pf.classList.remove('shake');
+                pf.placeholder = 'Key';
+            }, 500);
+        }
+    }
+    
+    lb.onclick = login;
+    pf.onkeypress = e => { if (e.key === 'Enter') login(); };
+    
+    // TABS
+    const tf = document.getElementById('tabFun');
+    const ti = document.getElementById('tabInfo');
+    const fc = document.getElementById('funContent');
+    const ic = document.getElementById('infoContent');
+    
+    tf.onclick = () => {
+        tf.classList.add('active');
+        ti.classList.remove('active');
+        fc.style.display = 'block';
+        ic.style.display = 'none';
+    };
+    
+    ti.onclick = () => {
+        ti.classList.add('active');
+        tf.classList.remove('active');
+        ic.style.display = 'block';
+        fc.style.display = 'none';
+    };
+    
+    // CHECKS
+    const st = {maxPrecision: false, norecoil: false, melhorarMira: false};
+    document.querySelectorAll('.checkbox').forEach(cb => {
+        cb.onclick = () => {
+            const k = cb.getAttribute('data-key');
+            st[k] = !st[k];
+            cb.classList.toggle('checked', st[k]);
+        };
+    });
+    
+    // SLIDER
+    const sl = document.getElementById('slider');
+    const pv = document.getElementById('precVal');
+    sl.oninput = () => pv.textContent = sl.value;
+    
+    // DROPDOWN
+    const ab = document.getElementById('auxBtn');
+    const ad = document.getElementById('auxDropdown');
+    let aux = '';
+    
+    ab.onclick = () => ad.classList.toggle('open');
+    
+    document.querySelectorAll('.aux-item').forEach(it => {
+        it.onclick = () => {
+            aux = it.getAttribute('data-val');
+            ab.textContent = aux;
+            ab.style.color = '#fff';
+            ad.classList.remove('open');
+        };
+    });
+    
+    document.onclick = e => {
+        if (!ab.contains(e.target) && !ad.contains(e.target)) {
+            ad.classList.remove('open');
+        }
+    };
+    
+    // INJECT - ABRE FF DIRETO
+    const inj = document.getElementById('injectBtn');
+    inj.onclick = () => {
+        const af = [];
+        if (st.maxPrecision) af.push('Máximo de Precisão');
+        if (st.norecoil) af.push('Norecoil');
+        if (st.melhorarMira) af.push('Melhor Mira');
+        
+        if (af.length === 0 && !aux) {
+            alert('⚠️ Selecione pelo menos uma função!');
+            return;
+        }
+        
+        inj.textContent = 'INJETANDO...';
+        inj.disabled = true;
+
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        const isAndroid = /Android/i.test(ua);
+
+        if (isAndroid) {
+            const androidUrls = [
+                'intent://launch#Intent;scheme=freefire;package=com.dts.freefireth;end',
+                'intent://launch#Intent;scheme=freefiremax;package=com.dts.freefiremax;end',
+                'freefire://'
+            ];
+            let idx = 0;
+            const tryNext = () => {
+                if (idx < androidUrls.length) {
+                    window.location.href = androidUrls[idx++];
+                    setTimeout(tryNext, 400);
+                }
+            };
+            tryNext();
+        } else if (isIOS) {
+            const iosUrls = ['freefire://', 'freefiremax://', 'ff://'];
+            let idx = 0;
+            const tryNext = () => {
+                if (idx < iosUrls.length) {
+                    window.location.href = iosUrls[idx++];
+                    setTimeout(tryNext, 400);
+                }
+            };
+            tryNext();
+        } else {
+            window.location.href = 'freefire://';
+        }
+
+        setTimeout(() => {
+            let msg = '✅ Funções injetadas!\n\n';
+            if (af.length) {
+                msg += '📋 Funções:\n';
+                af.forEach(f => msg += `  • ${f}\n`);
+            }
+            if (aux) msg += `\n🎯 Auxílio: ${aux}`;
+            msg += `\n\n⚙️ Precisão: ${sl.value}`;
+            alert(msg);
+            inj.textContent = 'INJETAR FUNÇÕES NO JOGO';
+            inj.disabled = false;
+        }, 1800);
+    };
+})();
+    </script>
+
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker registrado com sucesso!"))
+        .catch((error) => console.error("Erro ao registrar Service Worker:", error));
+    }
+  </script>
+</body></html>
